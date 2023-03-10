@@ -16,7 +16,7 @@ with DAG(
 
     dataflow_sensor = DataflowJobStatusSensor(
         task_id='dataflow_job_status_sensor',
-        job_id="2023-03-10_06_12_14-2399155084892943273",
+        job_id="2023-03-10_07_12_01-7707972549974361680",
         project_id="planet-admin-staging",
         location="us-central1",
         expected_statuses="JOB_STATE_DONE",
