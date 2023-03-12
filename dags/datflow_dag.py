@@ -87,6 +87,7 @@ with DAG(
         project_id="planet-admin-staging",
         location="us-central1",
         expected_statuses="JOB_STATE_DONE",
+        timeout=100,
         dag=dag
     )
 
