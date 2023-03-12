@@ -1,11 +1,12 @@
 from datetime import datetime, timedelta
-from airflow import DAG
-from airflow.operators.python_operator import PythonOperator
-from airflow.operators.bash_operator import BashOperator
-from airflow.providers.google.cloud.sensors.dataflow import DataflowJobStatusSensor
-from airflow.operators.empty import EmptyOperator
+
 import pendulum
 import requests
+from airflow import DAG
+from airflow.operators.bash_operator import BashOperator
+from airflow.operators.empty import EmptyOperator
+from airflow.operators.python_operator import PythonOperator
+from airflow.providers.google.cloud.sensors.dataflow import DataflowJobStatusSensor
 
 default_args = {
     'owner': 'airflow',
@@ -15,10 +16,8 @@ default_args = {
     'retry_delay': timedelta(minutes=5),
 }
 
-# dag = DAG('dag_usage_run', default_args=default_args, schedule_interval=None)
 
-
-def run_curl_command():
+def daily_aum_rollup():
     headers = {
         'X-API-KEY': '513bc1c9-30ae-48e0-a8b8-86d6fcbc3428',
         'Content-Type': 'application/json',
@@ -49,24 +48,22 @@ def run_curl_command():
 
 
 def save_job_id(**context):
-    job_id = context['task_instance'].xcom_pull(task_ids='run_curl_command')
+    job_id = context['task_instance'].xcom_pull(task_ids='daily_aum_rollup')
     context['task_instance'].xcom_push(key='job_id', value=job_id)
 
 
-
 with DAG(
-        dag_id="runDataflowJob",
+        dag_id="checkStatusDataflow",
         start_date=pendulum.datetime(2021, 1, 1, tz="UTC"),
         catchup=False,
         schedule=None,
         tags=["RunDataflowJob"],
 ) as dag:
-
     start_task = EmptyOperator(task_id='start_task')
 
-    run_curl_command_operator = PythonOperator(
-        task_id='run_curl_command',
-        python_callable=run_curl_command,
+    daily_aum_rollup_operator = PythonOperator(
+        task_id='daily_aum_rollup',
+        python_callable=daily_aum_rollup,
     )
 
     save_job_id_task = PythonOperator(
@@ -75,24 +72,30 @@ with DAG(
         provide_context=True,
     )
 
-    status_check_bash_operator = BashOperator(
-        task_id='status_check_bash_operator',
-        bash_command='echo "Job ID: {{ task_instance.xcom_pull("save_job_id", key="job_id") }}"',
-        dag=dag,
-    )
-    
+    # status_check_bash_operator = BashOperator(
+    #     task_id='status_check_bash_operator',
+    #     bash_command='echo "Job ID: {{ task_instance.xcom_pull("save_job_id", key="job_id") }}"',
+    #     dag=dag,
+    # )
+
     dataflow_sensor = DataflowJobStatusSensor(
         task_id='check_dataflow_status',
         job_id="{{ task_instance.xcom_pull(task_ids='save_job_id', key='job_id') }}",
         project_id="planet-admin-staging",
         location="us-central1",
         expected_statuses="JOB_STATE_DONE",
-        timeout=100,
+        timeout=10,
         dag=dag
     )
 
-
+    daily_ordersv2_rollup = EmptyOperator(task_id='daily-ordersv2-rollup', dag=dag)
+    daily_dapi_rollup = EmptyOperator(task_id='daily-dapi-rollup', dag=dag)
+    daily_iris_rollup = EmptyOperator(task_id='daily-iris-rollup', dag=dag)
+    daily_usage_adjustments_rollup = EmptyOperator(task_id='daily-usage-adjustments-rollup', dag=dag)
+    daily_cfd_rollup = EmptyOperator(task_id='daily-cfd-rollup', dag=dag)
+    daily_append_results = EmptyOperator(task_id='daily-append-results', dag=dag)
+    daily_subscription_aum_rollup = EmptyOperator(task_id='daily-subscription-aum-rollup', dag=dag)
+    daily_append_results_aum = EmptyOperator(task_id='daily-append-results-aum', dag=dag)
     end_task = EmptyOperator(task_id='end_task', dag=dag)
 
-
-    start_task >> run_curl_command_operator >> save_job_id_task >> status_check_bash_operator >> dataflow_sensor >> end_task
+    start_task >> [daily_ordersv2_rollup, daily_dapi_rollup, daily_iris_rollup, daily_usage_adjustments_rollup] >> daily_cfd_rollup >> [daily_append_results, daily_aum_rollup_operator] >> save_job_id_task >> dataflow_sensor >> end_task
