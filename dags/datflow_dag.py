@@ -3,7 +3,6 @@ from datetime import datetime, timedelta
 import pendulum
 import requests
 from airflow import DAG
-from airflow.operators.bash_operator import BashOperator
 from airflow.operators.empty import EmptyOperator
 from airflow.operators.python_operator import PythonOperator
 from airflow.providers.google.cloud.sensors.dataflow import DataflowJobStatusSensor
@@ -98,4 +97,4 @@ with DAG(
     daily_append_results_aum = EmptyOperator(task_id='daily-append-results-aum', dag=dag)
     end_task = EmptyOperator(task_id='end_task', dag=dag)
 
-    start_task >> [daily_ordersv2_rollup, daily_dapi_rollup, daily_iris_rollup, daily_usage_adjustments_rollup] >> daily_cfd_rollup >> [daily_append_results, daily_aum_rollup_operator] >> save_job_id_task >> dataflow_sensor >> end_task
+    start_task >> [daily_ordersv2_rollup, daily_dapi_rollup, daily_iris_rollup, daily_usage_adjustments_rollup] >> daily_cfd_rollup >> [daily_append_results, daily_aum_rollup_operator] >> daily_subscription_aum_rollup >> daily_append_results_aum >> save_job_id_task >> dataflow_sensor >> end_task
