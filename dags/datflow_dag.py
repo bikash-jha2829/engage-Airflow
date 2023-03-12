@@ -55,7 +55,7 @@ def save_job_id(**context):
 
 
 with DAG(
-        dag_id="checkStatusDataflow",
+        dag_id="runDataflowJob",
         start_date=pendulum.datetime(2021, 1, 1, tz="UTC"),
         catchup=False,
         schedule=None,
