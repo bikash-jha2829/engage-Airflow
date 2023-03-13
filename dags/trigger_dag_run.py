@@ -1,6 +1,8 @@
 from airflow import DAG
 from airflow.operators.dagrun_operator import TriggerDagRunOperator
 from datetime import datetime
+from airflow.operators.empty import EmptyOperator
+
 
 default_args = {
     'owner': 'airflow',
