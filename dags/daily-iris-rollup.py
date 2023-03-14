@@ -13,7 +13,7 @@ default_args = {
 }
 
 with DAG(
-        dag_id="daily_aum_rollup",
+        dag_id="daily_iris_rollup",
         start_date=pendulum.datetime(2021, 1, 1, tz="UTC"),
         catchup=False,
         schedule=None,
