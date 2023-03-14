@@ -21,7 +21,7 @@ with DAG(
 ) as dag:
     start_task = EmptyOperator(task_id='start_task')
 
-    daily_ordersv2_rollup = EmptyOperator(task_id='daily-iris-rollup')
+    daily_ordersv2_rollup = EmptyOperator(task_id='daily-ordersv2-rollup')
 
     check_dataflow_status = EmptyOperator(task_id='check_daily-iris-rollup-job-status')
     end_task = EmptyOperator(task_id='end_task')
