@@ -18,7 +18,7 @@ default_args = {
 
 def daily_aum_rollup():
     headers = {
-        'X-API-KEY': '513bc1c9-30ae-48e0-a8b8-86d6fcbc3428',
+        'X-API-KEY': 'xxxxx',
         'Content-Type': 'application/json',
     }
 
